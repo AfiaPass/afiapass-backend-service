@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: afiapass-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-afiapass_db}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    container_name: afiapass-redis
+    ports:
+      - "6379:6379"
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: afiapass-api/Dockerfile
+    container_name: afiapass-api
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./afiapass-api/.env
+
+volumes:
+  mysql_data:
