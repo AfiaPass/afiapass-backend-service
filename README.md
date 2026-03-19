@@ -1,6 +1,6 @@
 # 🚀 AfiaPass Backend Monorepo
 
-Welcome to the central backend repository for **AfiaPass**, the underlying transit permit and tax-routing infrastructure powering **Drive-Thru Afia**.
+Welcome to the central backend repository for **AfiaPass**, the underlying transit permit and tax-routing infrastructure powering **the future of last mile delivery**.
 
 This repository utilizes a **Maven Multi-Module Architecture**. This design enforces a strict separation of concerns by keeping our core blockchain cryptography completely isolated from our REST API and database layers.
 
