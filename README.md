@@ -1,6 +1,3 @@
-Here is the updated README with a comprehensive High-Level System Design section added. It outlines the exact flow of the transit permit trust layer, how the components interact, and details the Web3/fintech boundaries between the traditional backend and the Stellar network.
-
----
 
 # 🚀 AfiaPass Backend Monorepo
 
@@ -156,6 +153,3 @@ The API will be available at `http://localhost:8080`.
 * **Architecture:** Follow standard Controller -> Service -> Repository patterns for REST API design.
 * **Dependency:** This module explicitly depends on `afiapass-sdk` in its `pom.xml` to access the blockchain utilities.
 
----
-
-Is there a specific design pattern you plan to use for the API-to-SDK orchestration (like the Facade or Adapter pattern) that we should explicitly document here?
