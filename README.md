@@ -1,75 +1,161 @@
-# 🚀 AfiaPass Backend Monorepo
-
-Welcome to the central backend repository for **AfiaPass**, the underlying transit permit and tax-routing infrastructure powering **the future of last mile delivery**.
-
-This repository utilizes a **Maven Multi-Module Architecture**. This design enforces a strict separation of concerns by keeping our core blockchain cryptography completely isolated from our REST API and database layers.
+Here is the updated README with a comprehensive High-Level System Design section added. It outlines the exact flow of the transit permit trust layer, how the components interact, and details the Web3/fintech boundaries between the traditional backend and the Stellar network.
 
 ---
 
-## 🏗️ Architecture Overview
+# 🚀 AfiaPass Backend Monorepo
 
-The project is split into two distinct Maven modules managed by a single Parent POM:
+Welcome to the central backend repository for AfiaPass. This system provides the underlying transit permit issuing, SEP-10 cryptography, and tax-routing infrastructure powering the future of last-mile delivery.
 
-| Module | Framework | Purpose |
-| :--- | :--- | :--- |
-| **`afiapass-sdk`** | Pure Java 21 | The Blockchain Engine. Handles Stellar SDK interactions, Soroban smart contract invocation, and SEP-10 JWT cryptography. **Contains zero Spring Boot dependencies.** |
-| **`afiapass-api`** | Spring Boot 3 | The Web Gateway. Handles HTTP REST requests from the Drive-Thru Afia mobile app, persists `PermitRecord` data to MySQL, and orchestrates the SDK. |
+This repository utilizes a **Maven Multi-Module Architecture**. This design enforces a strict separation of concerns by keeping our core blockchain cryptography completely isolated from our REST API and database layers, ensuring a robust foundation for distributed systems.
 
-### 📁 Directory Structure
+---
+
+## 🏗️ Architecture & High-Level System Design
+
+AfiaPass operates as a hybrid distributed system. It bridges traditional high-concurrency Web2 commerce platforms (like Drive-Thru Afia) with Web3 decentralized trust networks (Stellar/Soroban).
+
+### The System Components
+
+1. **Client Applications (Mobile/Web):** Requests permits, handles payments, and displays the Offline Ed25519 JWT (QR Code) for checkpoints.
+2. **Spring Boot API (`afiapass-api`):** The orchestration layer. It manages relational state, user sessions, standard business logic, and API rate limiting.
+3. **Blockchain Java SDK (`afiapass-sdk`):** The cryptographic engine. It acts as the stateless bridge to the Stellar network, handling transaction building, Soroban contract invocation, and token signing.
+4. **Relational Database (MySQL):** The system of record for off-chain data (user profiles, standard transactional history, API logs).
+5. **Stellar Network (Soroban):** The immutable ledger for digital provenance, tax-routing smart contracts, and decentralized permit verification.
+
+### Data Flow & Interaction Diagram
+
+```text
++-------------------+       REST / JSON        +---------------------------+
+|                   | -----------------------> |                           |
+|                   |                          |   afiapass-api            |
+|   Clients         | <----------------------- |   (Spring Boot Gateway)   |
+|                   |   JWT Permit Response    |                           |
++-------------------+                          +---------------------------+
+         |                                           |               |
+         | (Offline QR Scan)                         | (POJOs)       | (JPA/SQL)
+         v                                           v               v
++-------------------+                          +---------------------------+
+|                   |                          |                           |
+|   Checkpoint      |                          |   afiapass-sdk            |
+|   Scanner App     |                          |   (Pure Java Crypto)      |
+|                   |                          |                           |
++-------------------+                          +---------------------------+
+                                                     |               |
+                                     (RPC / XDR)     |               | (SEP-10 / Ed25519)
+                                                     v               v
+                                               +-----------+   +-------------+
+                                               | Stellar   |   | Offline JWT |
+                                               | Network   |   | Generation  |
+                                               +-----------+   +-------------+
+
+```
+
+### Core Workflows
+
+**1. Permit Issuance & Tax Routing**
+
+* The mobile client requests a transit permit via a REST POST request to the API.
+* The API records the request intent in MySQL.
+* The API passes the transaction details to the `afiapass-sdk`.
+* The SDK invokes the Soroban smart contract to execute the tax-routing logic and record the issuance on-chain.
+* Upon Stellar confirmation, the SDK signs a deterministic, time-bound Ed25519 JWT containing the transaction hash and route details.
+* The API returns this JWT to the client to be rendered as a QR code.
+
+**2. Offline Checkpoint Verification**
+
+* Because road checkpoints lack reliable internet, verification relies heavily on asymmetric cryptography rather than API calls.
+* The scanner app reads the Ed25519 JWT from the rider's screen.
+* The app mathematically verifies the signature against the AfiaPass Platform's known Public Key entirely offline, instantly validating the permit's authenticity.
+
+---
+
+## 📁 Directory Structure
+
 ```text
 afiapass-backend/
 ├── pom.xml                 # The Parent POM (Manages versions and links modules)
 ├── README.md               # This file
 │
 ├── afiapass-sdk/           # Module 1: Core Blockchain Library
-│   ├── pom.xml             # SDK Dependencies (Stellar, Nimbus JWT)
+│   ├── pom.xml             # SDK Dependencies (Stellar SDK, Nimbus JWT)
 │   └── src/main/java/      
 │
 └── afiapass-api/           # Module 2: Spring Boot API Gateway
     ├── pom.xml             # API Dependencies (Spring Web, Data JPA, MySQL)
-    ├── .env                # Local environment variables
+    ├── .env                # Local environment variables (Ignored by Git)
     └── src/main/java/      
 
-⚡ Getting Started
-Prerequisites
-
-    Java 21+
-
-    Maven 3.9+
-
-    MySQL (Local or Docker)
-
-Global Build Instructions
-
-Because this is a multi-module project, you must run build commands from this root directory. Maven will automatically compile the SDK first, and then inject it into the API Gateway.
-
-1. Clean and Build the Entire Monorepo:
 ```
-    Bash
-    
-    ./mvnw clean install
-```
-(Note: Use -DskipTests if you want to bypass unit tests during rapid development).
-
-2. Run the Spring Boot Server:
-Navigate into the API module to start the server:
-```
-    Bash
-    
-    cd afiapass-api
-    ./mvnw spring-boot:run
-```
-
-
-## 🛠️ Technology Stack
-* **Java 21**
-* **Official Stellar Java SDK** (`network.stellar:stellar-sdk`)
-* **Nimbus JOSE + JWT** (For offline token generation)
-* **Lombok** (Boilerplate reduction)
 
 ---
 
-## 🧱 Dependency Rules
-**Strict Rule:** Do not introduce `spring-boot-starter-*` dependencies into this module's `pom.xml`. 
+## ⚡ Getting Started
 
-All business logic here must remain as Plain Old Java Objects (POJOs). If a class needs configuration (like the Soroban RPC URL), it should be passed in via a standard Java constructor, allowing the host application (like our API Gateway) to manage the actual environment variables.
+### Prerequisites
+
+* **Java 21+** (Eclipse Temurin or Amazon Corretto recommended)
+* **Maven 3.9+**
+* **MySQL 8+** (Running locally or via Docker)
+
+### 1. Environment Configuration
+
+Before starting the application, you must configure your environment variables.
+Create a `.env` file inside the `afiapass-api/` directory (or export these to your system):
+
+```env
+# Database Configuration
+SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/afiapass_dev
+SPRING_DATASOURCE_USERNAME=root
+SPRING_DATASOURCE_PASSWORD=your_password
+
+# Stellar & Soroban Configuration
+STELLAR_NETWORK=TESTNET
+SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
+AFIAPASS_PLATFORM_PRIVATE_KEY=S_YOUR_SECRET_KEY_HERE
+
+```
+
+### 2. Global Build Instructions
+
+Because this is a multi-module project, you must run build commands from the **root directory**. Maven will automatically compile the SDK first, and then inject it into the API Gateway.
+
+**Clean and Build the Entire Monorepo:**
+
+```bash
+./mvnw clean install
+
+```
+
+*(Note: Use `-DskipTests` if you need to bypass unit tests during rapid local iteration).*
+
+### 3. Run the Spring Boot Server
+
+Once built, navigate into the API module to start the server:
+
+```bash
+cd afiapass-api
+./mvnw spring-boot:run
+
+```
+
+The API will be available at `http://localhost:8080`.
+
+---
+
+## 🧱 Module Guidelines & Dependency Rules
+
+### The `afiapass-sdk` Rules
+
+* **Technology:** Java 21, Official Stellar Java SDK (`network.stellar:stellar-sdk`), Nimbus JOSE + JWT, Lombok.
+* **Strict Boundary:** Do **not** introduce `spring-boot-starter-*` dependencies into this module's `pom.xml`.
+* **Why?** All business and cryptographic logic here must remain as Plain Old Java Objects (POJOs). If a class needs configuration (like the Soroban RPC URL), it must be passed in via a standard Java constructor. This ensures our blockchain logic remains hyper-portable and theoretically usable in any Java application, not just Spring.
+
+### The `afiapass-api` Rules
+
+* **Technology:** Spring Boot 3, Spring Web, Spring Data JPA, MySQL Driver.
+* **Architecture:** Follow standard Controller -> Service -> Repository patterns for REST API design.
+* **Dependency:** This module explicitly depends on `afiapass-sdk` in its `pom.xml` to access the blockchain utilities.
+
+---
+
+Is there a specific design pattern you plan to use for the API-to-SDK orchestration (like the Facade or Adapter pattern) that we should explicitly document here?
