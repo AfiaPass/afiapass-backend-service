@@ -17,10 +17,9 @@ public class KeyManager {
     // The pure Stellar KeyPair used by the Blockchain Adapter
     private final KeyPair stellarKeyPair;
 
-    public KeyManager() {
-        // Strictly load from environment variables, never hardcode.
-        String secretSeed = System.getenv("AFIAPASS_SECRET_SEED");
-        if (secretSeed == null || secretSeed.isBlank()) {
+    public KeyManager(String platformSecretSeed) {
+        // The secret seed is now injected, improving testability and configuration flexibility.
+        if (platformSecretSeed == null || platformSecretSeed.isBlank()) {
             throw new IllegalStateException("Critical Security Error: AFIAPASS_SECRET_SEED environment variable is missing.");
         }
 
@@ -30,7 +29,7 @@ public class KeyManager {
 
         // 2. Extract the raw 32-byte arrays needed for standard Ed25519 cryptography
         byte[] publicKeyBytes = this.stellarKeyPair.getPublicKey();
-        byte[] privateKeyBytes = StrKey.decodeEd25519SecretSeed(secretSeed.toCharArray());
+        byte[] privateKeyBytes = StrKey.decodeEd25519SecretSeed(platformSecretSeed.toCharArray());
 
         // 3. Build the Nimbus OctetKeyPair
         this.platformKeyPair = new OctetKeyPair.Builder(

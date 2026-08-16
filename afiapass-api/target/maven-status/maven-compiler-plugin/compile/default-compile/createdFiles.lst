@@ -1,0 +1,10 @@
+org/afiapass/gateway/model/PermitRecord.class
+org/afiapass/gateway/api/dtos/response/PermitResponse.class
+org/afiapass/gateway/api/PermitController.class
+org/afiapass/gateway/api/AfiaPassClient.class
+org/afiapass/gateway/AfiapassApplication.class
+org/afiapass/gateway/blockchain/services/GatewayPermitService.class
+org/afiapass/gateway/api/dtos/requests/PermitRequest.class
+org/afiapass/gateway/api/AnalyticsController.class
+org/afiapass/gateway/gatway/config/OpenApiConfig.class
+org/afiapass/gateway/repository/PermitRecordRepository.class

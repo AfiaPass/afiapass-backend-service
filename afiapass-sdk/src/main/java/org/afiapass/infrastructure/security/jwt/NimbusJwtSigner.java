@@ -47,7 +47,7 @@ public class NimbusJwtSigner implements TokenSigner {
 
         } catch (Exception e) {
             // Consider wrapping this in a custom TokenSigningException in the future
-            throw new RuntimeException("Failed to sign offline permit token", e);
+            throw new RuntimeException("Failed to sign offline permit token for transaction: " + permit.stellarTxHash(), e);
         }
     }
 }

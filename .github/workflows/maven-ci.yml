@@ -1,0 +1,37 @@
+name: AfiaPass Backend CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # Provide a dummy testnet key so the KeyManager doesn't crash during tests
+    env:
+      AFIAPASS_SECRET_SEED: SB2M2B3R2Z7X3N3H5T4O5W5M4R3N2M3N4X3N2M3N4X3N2M3N4X3N2M3N
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 (Eclipse Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build with Maven (Includes SDK and API Gateway)
+        run: ./mvnw clean verify
+
+      # Optional: If tests fail, output the exact error to the GitHub Actions UI
+      - name: Upload Test Reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: '**/target/surefire-reports/'

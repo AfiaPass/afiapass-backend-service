@@ -1,0 +1,10 @@
+/home/johdan/Desktop/afiapass-backend-service/afiapass-api/src/main/java/org/afiapass/gateway/gatway/config/OpenApiConfig.java
+/home/johdan/Desktop/afiapass-backend-service/afiapass-api/src/main/java/org/afiapass/gateway/api/PermitController.java
+/home/johdan/Desktop/afiapass-backend-service/afiapass-api/src/main/java/org/afiapass/gateway/model/PermitRecord.java
+/home/johdan/Desktop/afiapass-backend-service/afiapass-api/src/main/java/org/afiapass/gateway/blockchain/services/GatewayPermitService.java
+/home/johdan/Desktop/afiapass-backend-service/afiapass-api/src/main/java/org/afiapass/gateway/api/AnalyticsController.java
+/home/johdan/Desktop/afiapass-backend-service/afiapass-api/src/main/java/org/afiapass/gateway/api/dtos/response/PermitResponse.java
+/home/johdan/Desktop/afiapass-backend-service/afiapass-api/src/main/java/org/afiapass/gateway/api/dtos/requests/PermitRequest.java
+/home/johdan/Desktop/afiapass-backend-service/afiapass-api/src/main/java/org/afiapass/gateway/api/AfiaPassClient.java
+/home/johdan/Desktop/afiapass-backend-service/afiapass-api/src/main/java/org/afiapass/gateway/AfiapassApplication.java
+/home/johdan/Desktop/afiapass-backend-service/afiapass-api/src/main/java/org/afiapass/gateway/repository/PermitRecordRepository.java
