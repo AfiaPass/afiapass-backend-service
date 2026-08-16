@@ -9,12 +9,14 @@
         <outputRelativeToContentRoot value="true" />
         <module name="api-gateway" />
         <module name="Afiapass" />
+        <module name="afiapass-sdk" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="Afiapass" options="-parameters" />
+      <module name="afiapass-sdk" options="-parameters" />
       <module name="api-gateway" options="-parameters" />
     </option>
   </component>

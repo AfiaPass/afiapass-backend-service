@@ -1,20 +1,13 @@
 package org.afiapass.infrastructure.security.jwt;
 
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.Ed25519Signer;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.afiapass.core.domain.data.models.Permit;
 import org.afiapass.core.ports.outbound.TokenSigner;
 
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
-
-import static java.util.Arrays.fill;
 
 public class NimbusJwtSigner implements TokenSigner {
 
@@ -26,54 +19,35 @@ public class NimbusJwtSigner implements TokenSigner {
 
     @Override
     public String generateOfflineToken(Permit permit) {
-        char[] secretChars = null;
-        byte[] secretBytes = null;
-        ByteBuffer byteBuffer = null;
-
         try {
-            // 1. Get the secret seed
-            secretChars = keyManager.getPlatformKeyPair().getSecretSeed();
+            // 1. Initialize the Ed25519 signer
+            // Note: keyManager.getPlatformKeyPair() must return a Nimbus OctetKeyPair
+            JWSSigner signer = new Ed25519Signer(keyManager.getPlatformKeyPair());
 
-            // 2. Securely convert char[] to byte[] WITHOUT creating an immutable String
-            CharBuffer charBuffer = CharBuffer.wrap(secretChars);
-            byteBuffer = StandardCharsets.UTF_8.encode(charBuffer);
-            secretBytes = new byte[byteBuffer.remaining()];
-            byteBuffer.get(secretBytes);
+            // 2. Create JWS Header with EdDSA algorithm
+            JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.EdDSA).build();
 
-            // 3. Initialize the signer
-            JWSSigner signer = new MACSigner(secretBytes);
-
-            // 4. Build the claims
+            // 3. Build the claims (Strictly aligned with the frontend AfiaPassPayload interface)
             JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                    .subject(permit.riderId())
-                    .issuer("AfiaPass-Truth-Engine")
+                    .subject(permit.stellarTxHash())
+                    .issuer(keyManager.getPlatformPublicKey()) // Scanner verifies this exact key
                     .jwtID(permit.id().toString())
-                    .claim("route", permit.routeId())
-                    .claim("amount", permit.amount())
-                    .claim("txHash", permit.stellarTxHash())
+                    .claim("riderId", permit.riderId())        // Explicitly named for the scanner
+                    .claim("routeId", permit.routeId())        // Changed from "route" to "routeId"
+                    .claim("amount", permit.amount().toPlainString())
                     .issueTime(Date.from(permit.issuedAt()))
                     .expirationTime(Date.from(permit.expiresAt()))
                     .build();
 
-            // 5. Sign the JWT
-            SignedJWT signedJWT = new SignedJWT(
-                    new JWSHeader(JWSAlgorithm.HS256),
-                    claimsSet
-            );
+            // 4. Sign the JWT
+            SignedJWT signedJWT = new SignedJWT(header, claimsSet);
             signedJWT.sign(signer);
 
             return signedJWT.serialize();
 
         } catch (Exception e) {
+            // Consider wrapping this in a custom TokenSigningException in the future
             throw new RuntimeException("Failed to sign offline permit token", e);
-        } finally {
-            // 6. GUARANTEED MEMORY WIPE
-            // This runs no matter what, even if the signing fails!
-            if (secretChars != null) fill(secretChars, '\0');
-            if (secretBytes != null) fill(secretBytes, (byte) 0);
-            if (byteBuffer != null && byteBuffer.hasArray()) {
-                fill(byteBuffer.array(), (byte) 0);
-            }
         }
     }
 }

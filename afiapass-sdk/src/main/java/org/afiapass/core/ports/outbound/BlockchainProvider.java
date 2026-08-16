@@ -1,7 +1,8 @@
 package org.afiapass.core.ports.outbound;
 
+import java.math.BigDecimal;
 import java.util.concurrent.CompletableFuture;
 
 public interface BlockchainProvider {
-    CompletableFuture<String> payLevy(String riderId, String routeId, double amount);
+    CompletableFuture<String> payLevy(String riderId, String routeId, BigDecimal amount);
 }

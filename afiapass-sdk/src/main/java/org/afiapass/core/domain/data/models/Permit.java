@@ -1,5 +1,6 @@
 package org.afiapass.core.domain.data.models;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -10,7 +11,7 @@ public record Permit(
         UUID id,
         String riderId,
         String routeId,
-        double amount,
+        BigDecimal amount,
         Instant issuedAt,
         Instant expiresAt,
         String stellarTxHash
